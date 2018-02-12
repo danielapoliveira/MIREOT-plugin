@@ -59,6 +59,7 @@ public class AdditionalOntologyView extends AbstractOWLViewComponent {
     private JCheckBox showSearchCommentCheckBox;
     private JCheckBox showSearchLabelCheckBox;
     private JCheckBox showSearchDefinitionCheckBox;
+	private JCheckBox showSearchURICheckBox;
     private JCheckBox clsCheckBox;
     private JCheckBox objPropCheckBox;
 
@@ -329,7 +330,7 @@ public class AdditionalOntologyView extends AbstractOWLViewComponent {
 
                     public void actionPerformed(ActionEvent e) {
                         if(showSearchDefinitionCheckBox.isSelected()){
-                            saoi.setSearchByDefinitionFlag(false);
+                            saoi.setSearchByDefinitionFlag(true);
                         } else {
                             saoi.setSearchByDefinitionFlag(false);
                         }
@@ -338,7 +339,29 @@ public class AdditionalOntologyView extends AbstractOWLViewComponent {
 
         searchByBox.add(showSearchDefinitionCheckBox);
         searchByBox.add(Box.createHorizontalStrut(1));
+        
+        showSearchURICheckBox = new JCheckBox(
+                new AbstractAction("URI") {
+                    /**
+                     *
+                     */
+                    private static final long serialVersionUID = 1L;
 
+                    public void actionPerformed(ActionEvent e) {
+                        if(showSearchURICheckBox.isSelected()){
+                            saoi.setSearchByURIFlag(true);
+                        } else {
+                            saoi.setSearchByURIFlag(false);
+                        }
+                    }
+                });
+				
+		//setting label checkbox as selected by default
+        showSearchURICheckBox.setSelected(true);
+
+        searchByBox.add(showSearchURICheckBox);
+        searchByBox.add(Box.createHorizontalStrut(1));
+        
         showSearchCommentCheckBox = new JCheckBox(
                 new AbstractAction("Comment") {
 
@@ -356,9 +379,6 @@ public class AdditionalOntologyView extends AbstractOWLViewComponent {
 
                     }
                 });
-
-        //setting comment checkbox as selected by default
-        showSearchCommentCheckBox.setSelected(true);
 
         searchByBox.add(showSearchCommentCheckBox);
         searchByBox.add(Box.createHorizontalStrut(1));

@@ -44,8 +44,9 @@ public class AdditionalOntologySearcher {
 	private OWLDataFactory factory;
 
 	private boolean searchByLabel = true;
-	private boolean searchByComment = true;
+	private boolean searchByComment = false;
 	private boolean searchByDefinition = false;
+	private boolean searchByURI = true;
 
 	private boolean searchClasses = true;
 	private boolean searchObjectProperties = false;
@@ -112,6 +113,15 @@ public class AdditionalOntologySearcher {
 		this.searchByDefinition = searchByDefinition;
 		optionsChanged = true;
 	}
+	
+	public boolean searchByURIFlag() {
+		return searchByURI;
+	}
+
+	public void setSearchByURIFlag(boolean searchByURI) {
+		this.searchByURI = searchByURI;
+		optionsChanged = true;
+	}	
 
 	public boolean searchClassesFlag() {
 		return searchClasses;
@@ -198,10 +208,12 @@ public class AdditionalOntologySearcher {
 		OWLOntologyManager man = OWLManager.createOWLOntologyManager();
 
 		try {
-
+			System.out.println("Loading ontology...");
+			
 			if(ontUrl == null && ontFile == null){
 				throw new IOException("Either ontology file or URL must exist.");
 			} else if(ontUrl != null){ 
+				
 				this.ontology = man.loadOntology(IRI.create(ontUrl));
 			} else if(ontFile != null){
 				
@@ -211,17 +223,19 @@ public class AdditionalOntologySearcher {
 			
 		} catch (OWLOntologyCreationException e) {
 			JOptionPane.showMessageDialog(null, "Could not load ontology: " + e.getMessage());
+			e.printStackTrace();
 
 			throw e;
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Could not load ontology: " + e.getMessage());
-
+			e.printStackTrace();
 			throw e;
 		}
 
 		this.factory = man.getOWLDataFactory();
 
 		this.man = man;
+		System.out.println("Loading finished.");
 
 
 
@@ -321,7 +335,6 @@ public class AdditionalOntologySearcher {
 
 		}
 
-
 		return resultList;
 	}
 
@@ -345,6 +358,7 @@ public class AdditionalOntologySearcher {
 		OWLAnnotationProperty comment = df.getOWLAnnotationProperty(OWLRDFVocabulary.RDFS_COMMENT.getIRI());
 		
 		OWLAnnotationProperty definition = df.getOWLAnnotationProperty(IRI.create("http://purl.obolibrary.org/obo/IAO_0000115"));
+		
 
 
 		if (this.searchByLabelFlag()) {
@@ -367,6 +381,11 @@ public class AdditionalOntologySearcher {
 
 			resultList.addAll(this.searchClasses(lowercaseQuery, definition));
 
+		}
+		
+		if(this.searchByURIFlag()) {
+			
+			resultList.addAll(this.searchClasses(lowercaseQuery));
 		}
 		
 
@@ -422,6 +441,7 @@ public class AdditionalOntologySearcher {
 		}
 		return resultList;
 	}
+	
 
 	/**
 	 * 
@@ -478,6 +498,49 @@ public class AdditionalOntologySearcher {
 
 		return resultList;
 	}
+	
+	private ArrayList<SearchResult> searchClasses(String query){
+		
+
+		//list of ontology and imports
+		ArrayList<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+		ontologies.add(ontology);
+		
+		Set<OWLOntology> imports = getAdditionalManager().getImports(ontology);
+		
+
+		for(OWLOntology ont : imports) {
+			ontologies.add(ont);
+		}
+		
+
+		ArrayList<SearchResult> resultList = new ArrayList<SearchResult>();
+
+		for(OWLOntology ont : ontologies){
+			
+			for (OWLClass cls : ont.getClassesInSignature()) {
+
+				String uri = cls.toStringID().toLowerCase();
+				if(uri.equals(query)){	
+					
+					IRI labelIri = cls.getIRI();
+
+					String labelName = getLabel(cls, ont);
+					String matchType = "URI";
+					String matchContext = "NA";
+
+					//String matchContext = val2.getLiteral();
+
+					ClassSearchResult LabelResultList = new ClassSearchResult(labelIri, labelName, matchType, matchContext, cls, ontology);
+
+					resultList.add(LabelResultList);
+				}
+			}
+		}
+
+		return resultList;
+	}
+
 
 	/**
 	 * 
