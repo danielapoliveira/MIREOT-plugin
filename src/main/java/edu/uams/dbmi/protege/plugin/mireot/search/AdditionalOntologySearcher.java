@@ -209,7 +209,7 @@ public class AdditionalOntologySearcher {
 
 		try {
 			System.out.println("Loading ontology...");
-			
+
 			if(ontUrl == null && ontFile == null){
 				throw new IOException("Either ontology file or URL must exist.");
 			} else if(ontUrl != null){ 
@@ -267,7 +267,7 @@ public class AdditionalOntologySearcher {
 			if(this.searchClassesFlag()){
 				results.addAll(this.searchByClass());
 			}
-
+            
 			if(this.searchObjectPropertiesFlag()){
 				results.addAll(this.searchByObjectProperty());
 			}
@@ -334,9 +334,16 @@ public class AdditionalOntologySearcher {
 			resultList.addAll(searchObjectProperties(lowerCaseQuery, comment));
 
 		}
+        
+        if(this.searchByURIFlag()) {
+			
+			resultList.addAll(this.searchObjectProperties(lowerCaseQuery));
+		}
 
 		return resultList;
 	}
+    
+    
 
 	/**
 	 * 
@@ -436,6 +443,45 @@ public class AdditionalOntologySearcher {
 							resultList.add(resultItem);
 						}
 					}
+				}
+			}
+		}
+		return resultList;
+	}
+    
+    private ArrayList<SearchResult> searchObjectProperties(String query) {
+
+		//list of ontology and imports
+		ArrayList<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+
+		ontologies.add(ontology);
+		
+		Set<OWLOntology> imports = getAdditionalManager().getImports(ontology);
+
+		for(OWLOntology ont : imports){
+			ontologies.add(ont);
+		}
+
+		ArrayList<SearchResult> resultList = new ArrayList<SearchResult>();
+
+		for(OWLOntology ont : ontologies){
+			for (OWLObjectProperty objectProperty : ont.getObjectPropertiesInSignature()) {
+
+				String uri = objectProperty.toStringID().toLowerCase();
+
+				if(uri.equals(query)){	
+					
+					IRI labelIri = objectProperty.getIRI();
+
+					String labelName = getLabel(objectProperty, ont);
+					String matchType = "URI";
+					String matchContext = "NA";
+
+					//String matchContext = val2.getLiteral();
+
+					SearchResult resultItem = new ObjectPropertySearchResult(labelIri, labelName, matchType, matchContext, objectProperty, ontology);
+
+					resultList.add(resultItem);
 				}
 			}
 		}
